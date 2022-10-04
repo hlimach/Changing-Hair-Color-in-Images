@@ -36,6 +36,7 @@ class HairDataset(Dataset):
 
         # define transforms function 
         self.transforms = get_transforms(self.params)
+        
     
     def __len__(self):
         return len(self.set_A_size)
