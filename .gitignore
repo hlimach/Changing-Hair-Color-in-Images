@@ -2,6 +2,7 @@
 dataset/*.txt
 dataset/CelebAMask-HQ-mask-anno/*
 dataset/CelebA-HQ-img/*
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

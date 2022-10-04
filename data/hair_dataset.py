@@ -45,13 +45,39 @@ class HairDataset(Dataset):
         k_input_images = random.sample(self.set_A, self.params.K) # set of possible original images to be input into generator
         k_target_colors = random.sample(self.set_B, self.params.K) # set of possible target hair colors to be input into generator
         
+        i = 0 
         random.shuffle(k_input_images)
-        random.shuffle(k_target_colors)
+        best_color_dist = get_color_distances(k_input_images, k_target_colors)
 
-        current_input_image = k_input_images[0]
-        current_target_color = k_target_colors[0]
-        dist = get_distance(current_input_image, current_target_color)
+        # maximize distance between input image and target hair color
+        for l in range(self.params.L):
+            random.shuffle(k_target_colors)
+            current_color_dist = get_color_distances(k_input_images, k_target_colors)
+            if current_color_dist > best_color_dist:
+                i = random.randint(0, self.params.K - 1)
+                best_color_dist = current_color_dist
+                best_target_color = k_target_colors[i]
 
-        # image A, image B, hair color of image A, hair color of image B, target hair color sampled from domain B
-        return super().__getitem__(index)
+        A_entry = k_input_images[i]
+        B_entry = self.set_B[random.randint(0, self.set_B_size - 1)]
+
+        # open image A and B
+        images_path = os.path.join(self.params.dataroot, self.params.data_folder)
+        img_A_path = os.path.join(images_path, A_entry[0])
+        img_B_path = os.path.join(images_path, B_entry[0])
+        img_A = Image.open(img_A_path).convert('RGB')
+        img_B = Image.open(img_B_path).convert('RGB')
+
+        # generate hair color images for image A, B, and target
+        A_orig_rgb = create_image_from_rgb(A_entry[1:-1])
+        B_orig_rgb = create_image_from_rgb(B_entry[1:-1])
+        target_rgb = create_image_from_rgb(best_target_color[1:-1])
+
+        # apply transformations to all images and save
+        out = {'A': self.transforms(img_A),
+                'B': self.transforms(img_B),
+                'A_orig_rgb': self.transforms(A_orig_rgb),
+                'B_orig_rgb': self.transforms(B_orig_rgb),
+                'target_rgb': self.transforms(target_rgb)}
+        return out
         

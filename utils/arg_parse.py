@@ -12,6 +12,7 @@ def parse_args(params):
     parser.add_argument('--split_point', type=int, default=12000, help='index of splitting train and test sets')
 
     parser.add_argument('--K', type=int, required=True, help='number of image samples to draw from each domain')
+    parser.add_argument('--L', type=int, required=True, help='number of times to shuffle target hair color set to maximize distance with input image')
 
     args = parser.parse_args(params)
     return args

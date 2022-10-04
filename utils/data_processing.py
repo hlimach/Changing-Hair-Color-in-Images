@@ -1,12 +1,19 @@
-from ast import operator
+import torchvision.transforms as transforms
+from PIL import Image
 import numpy as np
 
-def get_distance(input, target):
-    input_rgb = input[1:-1]
-    target_rgb = target[1:-1]
-    dist = np.sum(np.power(np.subtract(input_rgb, target_rgb),2))
+# taken from original repo 
+def create_image_from_rgb(color, height = 256, width = 256):
+    colors_array = np.array(color)
+    colors_array = np.reshape(colors_array,(1,1,3))
+    img_array = np.ones((height,width,3)) * colors_array
+    img = Image.fromarray(np.uint8(img_array * 255))
+    return img
+
+def get_color_distances(input, target):
+    # recheck
+    dist = 0.0
+    for x, y in zip(input, target):
+        dist +=  np.linalg.norm(np.subtract(x[1:-1],y[1:-1]),ord=2)
     return dist
 
-def get_transforms(params):
-    print('gave transforms')
-    return 0
