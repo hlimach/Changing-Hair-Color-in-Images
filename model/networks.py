@@ -27,7 +27,7 @@ class Generator(nn.Module):
         )
 
         res_blocks = []
-        for i in range(params.r_blocks):
+        for i in range(self.params.r_blocks):
             res_blocks += [ResidualBlock(nf, self.norm_layer)]
         self.res_blocks = nn.Sequential(*res_blocks)
 
@@ -85,8 +85,8 @@ class NLayerDiscriminator(nn.Module):
 
         mul = 1
         mul_prev = 1
-        for n in range(1, params.n_layers+1):
-            if n == params.n_layers:
+        for n in range(1, self.params.n_layers+1):
+            if n == self.params.n_layers:
                 s = 1
             mul_prev = mul
             mul = min(2 ** n, 8)

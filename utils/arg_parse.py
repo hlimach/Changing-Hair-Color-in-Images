@@ -18,5 +18,9 @@ def parse_args(params):
     parser.add_argument('--crop_size', type=int, default=256, help='crop image to this size')
     parser.add_argument('--flip', type=bool, default=False, help='random horizontal flip of image [True | False]')
 
+    # model parameter
+    parser.add_argument('--r_blocks', type=int, default=9, help='number of residual blocks in generator')
+    parser.add_argument('--n_layers', type=int, default=3, help='number of layers in basic discriminator')
+
     args = parser.parse_args(params)
     return args
