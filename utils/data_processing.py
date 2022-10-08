@@ -21,7 +21,8 @@ def get_transforms(params):
     transform_list = []
 
     if 'resize' in params.preprocess:
-        transform_list.append(transforms.Resize([params.scale_size, params.scale_size], transforms.InterpolationMode.BICUBIC))
+        transform_list.append(transforms.Resize([params.scale_size, params.scale_size], 
+                                transforms.InterpolationMode.BICUBIC))
 
     if 'crop' in params.preprocess:
         transform_list.append(transforms.RandomCrop(params.crop_size))
