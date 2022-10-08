@@ -2,7 +2,7 @@ import os
 import json
 import random
 from torch.utils.data import Dataset
-from utils import *
+from .data_processing import *
 
 class HairDataset(Dataset):
     def __init__(self, params):
@@ -70,15 +70,15 @@ class HairDataset(Dataset):
         img_B = Image.open(img_B_path).convert('RGB')
 
         # generate hair color images for image A, B, and target
-        A_orig_rgb = create_image_from_rgb(A_entry[1:-1])
-        B_orig_rgb = create_image_from_rgb(B_entry[1:-1])
+        A_rgb = create_image_from_rgb(A_entry[1:-1])
+        B_rgb = create_image_from_rgb(B_entry[1:-1])
         target_rgb = create_image_from_rgb(best_target_color[1:-1])
 
         # apply transformations to all images and save
         out = {'A': self.transforms(img_A),
                 'B': self.transforms(img_B),
-                'A_orig_rgb': self.transforms(A_orig_rgb),
-                'B_orig_rgb': self.transforms(B_orig_rgb),
+                'A_rgb': self.transforms(A_rgb),
+                'B_rgb': self.transforms(B_rgb),
                 'target_rgb': self.transforms(target_rgb)}
         return out
         

@@ -1,1 +1,1 @@
-from .hair_dataset import *
+from .hair_dataset import HairDataset

@@ -17,6 +17,7 @@ def parse_args(params):
     parser.add_argument('--scale_size', type=int, default=286, help='scale images to this size')
     parser.add_argument('--crop_size', type=int, default=256, help='crop image to this size')
     parser.add_argument('--flip', type=bool, default=False, help='random horizontal flip of image [True | False]')
+    parser.add_argument('--batch_size', type=int, default=8, help='batch size for datatset')
 
     # model parameter
     parser.add_argument('--r_blocks', type=int, default=9, help='number of residual blocks in generator')
