@@ -20,6 +20,7 @@ def parse_args(params):
     parser.add_argument('--batch_size', type=int, default=8, help='batch size for datatset')
 
     # model parameter
+    parser.add_argument('--nf', type=int, default=64, help='number of filters')
     parser.add_argument('--r_blocks', type=int, default=9, help='number of residual blocks in generator')
     parser.add_argument('--n_layers', type=int, default=3, help='number of layers in basic discriminator')
 

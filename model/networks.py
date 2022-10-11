@@ -3,7 +3,7 @@ import torch.nn as nn
 import functools
 
 class Generator(nn.Module):
-    def __init__(self, in_c, out_c, nf, params):
+    def __init__(self, in_c, out_c, params):
         super().__init__()
 
         self.params = params
@@ -11,38 +11,38 @@ class Generator(nn.Module):
 
         self.in_block = nn.Sequential(
             nn.ReflectionPad2d(3),
-            nn.Conv2d(in_c, nf, kernel_size=7, bias=False),
-            self.norm_layer(nf),
+            nn.Conv2d(in_c, params.nf, kernel_size=7, bias=False),
+            self.norm_layer(params.nf),
         )
 
         self.downsample_1 = nn.Sequential(
-            nn.Conv2d(nf, nf * 2, kernel_size=3, stride=2, padding=1, bias=False),
-            self.norm_layer(nf * 2),
+            nn.Conv2d(params.nf, params.nf * 2, kernel_size=3, stride=2, padding=1, bias=False),
+            self.norm_layer(params.nf * 2),
         )
 
         self.downsample_2 = nn.Sequential(
-            nn.Conv2d(nf * 2, nf * 4, kernel_size=3, stride=2, padding=1, bias=False),
-            self.norm_layer(nf * 4),
+            nn.Conv2d(params.nf * 2, params.nf * 4, kernel_size=3, stride=2, padding=1, bias=False),
+            self.norm_layer(params.nf * 4),
         )
 
         res_blocks = []
         for i in range(self.params.r_blocks):
-            res_blocks += [ResidualBlock(nf, self.norm_layer)]
+            res_blocks += [ResidualBlock(params.nf, self.norm_layer)]
         self.res_blocks = nn.Sequential(*res_blocks)
 
         self.upsample_1 = nn.Sequential(
-            nn.ConvTranspose2d(nf * 4, nf * 2, kernel_size=3, stride=2, padding=1, output_padding=1, bias=False),
-            self.norm_layer(nf * 2),
+            nn.ConvTranspose2d(params.nf * 4, params.nf * 2, kernel_size=3, stride=2, padding=1, output_padding=1, bias=False),
+            self.norm_layer(params.nf * 2),
         )
 
         self.upsample_2 = nn.Sequential(
-            nn.ConvTranspose2d(nf * 2, nf, kernel_size=3, stride=2, padding=1, output_padding=1, bias=False),
-            self.norm_layer(nf),
+            nn.ConvTranspose2d(params.nf * 2, params.nf, kernel_size=3, stride=2, padding=1, output_padding=1, bias=False),
+            self.norm_layer(params.nf),
         )
 
         self.out_block = nn.Sequential(
             nn.ReflectionPad2d(3),
-            nn.Conv2d(nf, out_c, kernel_size=7)
+            nn.Conv2d(params.nf, out_c, kernel_size=7)
         )
     
     def forward(self, x):
@@ -70,7 +70,7 @@ class ResidualBlock(nn.Module):
         return out
 
 class NLayerDiscriminator(nn.Module):
-    def __init__(self, in_c, nf, params):
+    def __init__(self, in_c, params):
         super().__init__()
 
         k = 4
@@ -80,7 +80,7 @@ class NLayerDiscriminator(nn.Module):
         self.params = params
         self.norm_layer = functools.partial(nn.BatchNorm2d, affine=True, track_running_stats=True)
 
-        sequence += [nn.Conv2d(in_c, nf, kernel_size=k, stride=s, padding=p, bias=False)]
+        sequence += [nn.Conv2d(in_c, params.nf, kernel_size=k, stride=s, padding=p, bias=False)]
 
         mul = 1
         mul_prev = 1
@@ -89,10 +89,10 @@ class NLayerDiscriminator(nn.Module):
                 s = 1
             mul_prev = mul
             mul = min(2 ** n, 8)
-            sequence += [nn.Conv2d(nf * mul_prev, nf * mul, kernel_size=k, stride=s, padding=p, bias=False),
-                        self.norm_layer(nf * mul),
+            sequence += [nn.Conv2d(params.nf * mul_prev, params.nf * mul, kernel_size=k, stride=s, padding=p, bias=False),
+                        self.norm_layer(params.nf * mul),
                         nn.LeakyReLU(0.2, True)]
-        sequence += [nn.Conv2d(nf * mul, 1, kernel_size=k, stride=s, padding=p, bias=False)]
+        sequence += [nn.Conv2d(params.nf * mul, 1, kernel_size=k, stride=s, padding=p, bias=False)]
 
         self.sequence = nn.Sequential(*sequence)
 
