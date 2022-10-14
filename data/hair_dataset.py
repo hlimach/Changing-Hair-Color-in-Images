@@ -31,15 +31,11 @@ class HairDataset(Dataset):
 
         self.set_A_size = len(self.set_A)
         self.set_B_size = len(self.set_B)
-
         assert(self.set_A_size == self.set_B_size)
-
-        # define transforms function 
         self.transforms = get_transforms(self.params)
         
-    
     def __len__(self):
-        return len(self.set_A_size)
+        return self.set_A_size
 
     def __getitem__(self, index):
         # randomly sample K images from both set A and set B

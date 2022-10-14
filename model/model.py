@@ -10,17 +10,24 @@ class HairColorGAN(object):
         super().__init__()
         self.params = params
         self.is_train = is_train
+        self.checkpoint = 0
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.gen = Generator(in_c=6, out_c=3, params=self.params)
+        init_weights(self.gen)
         self.model_names = ['gen']
 
         if self.is_train:
             self.disc = NLayerDiscriminator(in_c=6, params=self.params)
+            init_weights(self.disc)
             self.model_names.append('disc')
+            self.optimizers = []
             self.setup_losses()
             self.setup_optimizers()
             self.setup_schedulers()
+
+        if not self.is_train or self.params.continue_train:
+            self.load_latest_checkpoint()
 
     def set_inputs(self, input):
         self.A = input['A'].to(self.device)
@@ -43,14 +50,15 @@ class HairColorGAN(object):
         self.optimizers.append(self.optimizer_D)
     
     def setup_schedulers(self):
+        self.schedulers = []
         for optimizer in self.optimizers:
             if self.params.lr_policy == 'linear':
                 def lambda_rule(epoch):
-                    lr_l = 1.0 - max(0, epoch + self.params.epoch_count - self.params.n_epochs) / float(self.params.n_epochs_decay + 1)
+                    lr_l = 1.0 - max(0, epoch + self.checkpoint - self.params.n_epochs) / float(self.params.n_epochs_decay + 1)
                     return lr_l
-                self.scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
+                self.schedulers.append(lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule))
             elif self.params.lr_policy == 'step':
-                self.scheduler = lr_scheduler.StepLR(optimizer, step_size=self.params.lr_decay_iters, gamma=0.1)
+                self.schedulers.append(lr_scheduler.StepLR(optimizer, step_size=self.params.lr_decay_iters, gamma=0.1))
 
     def forward_G(self):
         self.fake_B = self.gen(torch.cat((self.A, self.target_rgb), 1))
@@ -102,24 +110,42 @@ class HairColorGAN(object):
         self.backward_D()
         self.optimizer_D.step()
 
-    def save_checkpoint(self, checkpoint):
-        for model in self.model_names:
-            filename = 'epoch_%s_%s.pth' % (checkpoint, model)
-            save_path = os.path.join(self.save_dir, filename)
-            net = getattr(self, model)
+    def update_learning_rate(self):
+        for scheduler in self.schedulers:
+            scheduler.step()
+        self.lr = self.optimizers[0].param_groups[0]['lr']
+    
+    def get_stats(self):
+        return {'lr': self.lr, 'loss_G': self.loss_G, 'loss_D': self.loss_D}
+    
+    #start from here
+    def save_data(self):
+        print()
 
-            torch.save({'epoch': checkpoint,
+    def save_checkpoint(self, epoch):
+        self.checkpoint = epoch
+        for model in self.model_names:
+            filename = 'epoch_%s_%s.pth' % (self.checkpoint, model)
+            save_path = os.path.join(self.params.save_dir, filename)
+            net = getattr(self, model)
+            torch.save({'epoch': self.checkpoint,
                         'model_state_dict': net.state_dict()
                         }, save_path)
 
-## start from here
-    def load_latest(self, checkpoint):
+    def load_latest_checkpoint(self):
+        path = os.path.join(self.params.save_dir, os.listdir(self.params.save_dir)[-1])
+        state_dict = torch.load(path, map_location=self.device)
+        self.checkpoint = state_dict['epoch']
+        
         for model in self.model_names:
-            filename = 'epoch_%s_%s.pth' % (checkpoint, model)
-            save_path = os.path.join(self.save_dir, filename)
-            if os.path.exists(save_path):
-                net = getattr(self, model)
+            filename = 'epoch_%s_%s.pth' % (self.checkpoint, model)
+            save_path = os.path.join(self.params.save_dir, filename)
+            state_dict = torch.load(save_path, map_location=self.device)
+            net = getattr(self, model)
+            net.load_state_dict(state_dict['model_state_dict'])
+            print('successfully loaded: ', filename)
 
-                torch.save({'epoch': checkpoint,
-                            'model_state_dict': net.state_dict()
-                            }, save_path)
+        self.checkpoint += 1
+        print('starting from epoch: ', self.checkpoint)
+
+        return self.checkpoint
