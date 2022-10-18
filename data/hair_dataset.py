@@ -1,6 +1,7 @@
 import os
 import json
 import random
+from PIL import Image
 from torch.utils.data import Dataset
 from utils.data_processing import *
 
@@ -41,10 +42,12 @@ class HairDataset(Dataset):
         # randomly sample K images from both set A and set B
         k_input_images = random.sample(self.set_A, self.params.K) # set of possible original images to be input into generator
         k_target_colors = random.sample(self.set_B, self.params.K) # set of possible target hair colors to be input into generator
-        
-        i = 0 
+
         random.shuffle(k_input_images)
         best_color_dist = get_color_distances(k_input_images, k_target_colors)
+
+        i = random.randint(0, self.params.K - 1)
+        best_target_color = k_target_colors[i]
 
         # maximize distance between input image and target hair color
         for l in range(self.params.L):

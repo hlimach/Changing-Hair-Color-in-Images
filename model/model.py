@@ -2,8 +2,10 @@ from .networks import Generator, NLayerDiscriminator
 from utils.model_helpers import *
 import torch.nn as nn
 import torch
+from PIL import Image
 from torch.optim import lr_scheduler, Adam
 import os
+import numpy as np
 
 class HairColorGAN(object):
     def __init__(self, params, is_train=True):
@@ -114,38 +116,54 @@ class HairColorGAN(object):
         for scheduler in self.schedulers:
             scheduler.step()
         self.lr = self.optimizers[0].param_groups[0]['lr']
-    
+
+    def refresh(self, epoch, max):
+        self.save_indices = get_saving_indices(self.params.img_pool_size, max)
+        self.epoch_dir = init_checkpoint_dir(self.params.save_dir, epoch)
+        self.iter_tracker = []
+        self.loss_G_tracker = []
+        self.loss_D_tracker = []
+
+    def update_trackers(self, i):
+        self.iter_tracker.append(i)
+        self.loss_G_tracker.append(self.loss_G.item())
+        self.loss_D_tracker.append(self.loss_D.item())
+
     def get_stats(self):
         return {'lr': self.lr, 'loss_G': self.loss_G, 'loss_D': self.loss_D}
     
-    #start from here
-    def save_data(self):
-        print()
-
-    def save_checkpoint(self, epoch):
-        self.checkpoint = epoch
+    def save_images(self, iter):
+        a_save = tensor_to_img(self.A.detach())
+        rgb_save = tensor_to_img(self.target_rgb.detach())
+        fake_save = tensor_to_img(self.fake_B.detach())
+        self.concat = np.concatenate((rgb_save, a_save, fake_save), axis = 1)
+        self.image_pil = Image.fromarray(self.concat)
+        path = os.path.join(self.epoch_dir, ('iter_%s.png') % (iter))
+        self.image_pil.save(path)
+    
+    def save_logs(self, epoch):
+        print('finished epoch ', epoch)
+        save_stats(self.epoch_dir, self.iter_tracker, self.loss_G_tracker, self.loss_D_tracker)
         for model in self.model_names:
-            filename = 'epoch_%s_%s.pth' % (self.checkpoint, model)
-            save_path = os.path.join(self.params.save_dir, filename)
+            filename = 'model_%s.pth' % (model)
+            path = os.path.join(self.epoch_dir, filename)
             net = getattr(self, model)
-            torch.save({'epoch': self.checkpoint,
+            torch.save({'epoch': epoch,
                         'model_state_dict': net.state_dict()
-                        }, save_path)
+                        }, path)
+            print(('%s saved to %s') % (model, path))
 
     def load_latest_checkpoint(self):
-        path = os.path.join(self.params.save_dir, os.listdir(self.params.save_dir)[-1])
-        state_dict = torch.load(path, map_location=self.device)
-        self.checkpoint = state_dict['epoch']
+        folder = [f for f in os.listdir(self.params.save_dir) if 'epoch_' in f][-1]
+        save_path = os.path.join(self.params.save_dir, folder)
+        self.checkpoint = int(folder.split('_')[-1])
         
         for model in self.model_names:
-            filename = 'epoch_%s_%s.pth' % (self.checkpoint, model)
-            save_path = os.path.join(self.params.save_dir, filename)
-            state_dict = torch.load(save_path, map_location=self.device)
+            filename = 'model_%s.pth' % (model)
+            state_dict = torch.load(os.path.join(save_path, filename), map_location=self.device)
             net = getattr(self, model)
             net.load_state_dict(state_dict['model_state_dict'])
             print('successfully loaded: ', filename)
 
         self.checkpoint += 1
         print('starting from epoch: ', self.checkpoint)
-
-        return self.checkpoint
