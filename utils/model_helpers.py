@@ -6,12 +6,12 @@ import numpy as np
 from torch.nn import init
 from PIL import Image
 
-def get_target_label(is_real, pred):
+def get_target_label(is_real, pred, device):
     if is_real:
         target_tensor = torch.tensor(1.0)
     else:
         target_tensor = torch.tensor(0.0)
-    return target_tensor.expand_as(pred)
+    return target_tensor.expand_as(pred).to(device)
 
 def set_requires_grad(nets, requires_grad):
     for net in nets:
@@ -29,8 +29,8 @@ def init_weights(model, init_gain=0.02):
             init.constant_(m.bias.data, 0.0)
     model.apply(init_func)
 
-def get_saving_indices(len, max):
-    return random.sample(range(0, max-1), len)
+def get_saving_indices(len, min, max):
+    return random.sample(range(min, max-1), len)
 
 def init_checkpoint_dir(save_dir, epoch):
     folder = os.path.join(save_dir, 'epoch_%s' % epoch)

@@ -9,6 +9,7 @@ class HairDataset(Dataset):
     def __init__(self, params):
         super().__init__()
         self.params = params
+        self.images_root = os.path.join(self.params.dataroot, self.params.data_folder)
 
         # load set A and B json files
         set_A_file = open(os.path.join(params.dataroot, self.params.setA_file))
@@ -62,9 +63,14 @@ class HairDataset(Dataset):
         B_entry = self.set_B[random.randint(0, self.set_B_size - 1)]
 
         # open image A and B
-        images_path = os.path.join(self.params.dataroot, self.params.data_folder)
-        img_A_path = os.path.join(images_path, A_entry[0])
-        img_B_path = os.path.join(images_path, B_entry[0])
+        A_id = int(A_entry[0].split('.')[0])
+        B_id = int(B_entry[0].split('.')[0])
+        A_folder_id = A_id - A_id % 1000
+        B_folder_id = B_id - B_id % 1000
+        A_subfolder = os.path.join(self.images_root, str(A_folder_id))
+        B_subfolder = os.path.join(self.images_root, str(B_folder_id))
+        img_A_path = os.path.join(A_subfolder, A_entry[0])
+        img_B_path = os.path.join(B_subfolder, B_entry[0])
         img_A = Image.open(img_A_path).convert('RGB')
         img_B = Image.open(img_B_path).convert('RGB')
 

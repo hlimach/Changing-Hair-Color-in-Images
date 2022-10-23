@@ -1,5 +1,6 @@
 import torch.nn.functional as F
 import torch.nn as nn
+import torch
 import functools
 
 class Generator(nn.Module):
@@ -52,7 +53,7 @@ class Generator(nn.Module):
         x = self.res_blocks(x)
         x = F.relu(self.upsample_1(x))
         x = F.relu(self.upsample_2(x))
-        out = F.tanh(self.out_block(x))
+        out = torch.tanh(self.out_block(x))
         return out
 
 class ResidualBlock(nn.Module):

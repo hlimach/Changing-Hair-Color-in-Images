@@ -35,7 +35,6 @@ def parse_args(params):
     
     # model training, loading and saving options
     parser.add_argument('--continue_train', default=False, action='store_true', help='if training should be continued from a checkpoint')
-    parser.add_argument('--save_interval', type=int, default=1, help='number of epochs to save metadata')
     parser.add_argument('--print_iter_interval', type=int, default=50, help='print training stats after n iterations in each epoch')
     parser.add_argument('--save_dir', type=str, default='./model/checkpoints', help='where model checkpoints are saved')
     parser.add_argument('--img_pool_size', type=int, default=50, help='how many images to save while training')
