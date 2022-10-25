@@ -30,7 +30,7 @@ class HairColorGAN(object):
             self.setup_optimizers()
             self.setup_schedulers()
 
-        if not self.is_train or self.params.continue_train:
+        if (not self.is_train) or self.params.continue_train:
             self.load_latest_checkpoint()
 
     def set_inputs(self, input):
@@ -97,6 +97,15 @@ class HairColorGAN(object):
         fake_loss = self.crit_GAN(fake_output, get_target_label(False, fake_output, self.device))
         self.loss_D = (real_loss + fake_loss) / 2 # ([(D(y,h2)-1)^2]+[(D(G(x,h2),h2)-0)^2])/2
         self.loss_D.backward()
+
+    def eval(self):
+        for model in self.model_names:
+            net = getattr(self, model)
+            net.eval()
+    
+    def test(self):
+        with torch.no_grad():
+            self.forward_G()
     
     def optimize_parameters(self):
         # forward step
@@ -121,7 +130,7 @@ class HairColorGAN(object):
 
     def refresh(self, epoch):
         self.epoch_dir = init_checkpoint_dir(self.params.save_dir, epoch)
-        saved_count = len([f for f in os.listdir(self.epoch_dir) if f.endswith('.png')])
+        saved_count = len([f for f in os.listdir(self.epoch_dir) if self.params.dataset_type in f])
         self.save_indices = get_saving_indices(self.params.img_pool_size - saved_count, 
                                                 self.iter, self.i_max)
         self.iter_tracker = []
@@ -144,7 +153,7 @@ class HairColorGAN(object):
         fake_save = tensor_to_img(self.fake_B.detach())
         self.concat = np.concatenate((rgb_save, a_save, fake_save), axis = 1)
         self.image_pil = Image.fromarray(self.concat)
-        path = os.path.join(self.epoch_dir, ('iter_%s.png') % (iter))
+        path = os.path.join(self.epoch_dir, ('%s_iter_%s.png') % (self.params.dataset_type, iter))
         self.image_pil.save(path)
     
     def save_logs(self, epoch):

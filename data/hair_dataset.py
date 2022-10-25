@@ -33,7 +33,10 @@ class HairDataset(Dataset):
 
         self.set_A_size = len(self.set_A)
         self.set_B_size = len(self.set_B)
-        assert(self.set_A_size == self.set_B_size)
+
+        if self.params.dataset_type == 'train':
+            assert(self.set_A_size == self.set_B_size)
+        
         self.transforms = get_transforms(self.params)
         
     def __len__(self):

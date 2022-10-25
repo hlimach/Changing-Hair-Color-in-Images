@@ -8,11 +8,13 @@ essentially 30 subfolders in the main folder.
 import os
 import shutil
 
-root = './CelebA-HQ-img'
+root = './dataset/CelebA-HQ-img'
 images = os.listdir(root)
 print(len(images))
 
 for img in images:
+    if '.DS_Store' in img:
+        continue
     id = int(img.split('.')[0])
     folder = id - id % 1000
     folder_path = os.path.join(root, str(folder))
