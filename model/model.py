@@ -120,13 +120,15 @@ class HairColorGAN(object):
         self.lr = self.optimizers[0].param_groups[0]['lr']
 
     def refresh(self, epoch):
-        self.iter_tracker = []
-        self.loss_G_tracker = []
-        self.loss_D_tracker = []
         self.epoch_dir = init_checkpoint_dir(self.params.save_dir, epoch)
         saved_count = len([f for f in os.listdir(self.epoch_dir) if f.endswith('.png')])
         self.save_indices = get_saving_indices(self.params.img_pool_size - saved_count, 
                                                 self.iter, self.i_max)
+        self.iter_tracker = []
+        self.loss_G_tracker = []
+        self.loss_D_tracker = []
+        if self.iter != 0:
+            self.iter_tracker, self.loss_G_tracker, self.loss_D_tracker = load_trackers(self.epoch_dir)
 
     def update_trackers(self, i):
         self.iter_tracker.append(i)
@@ -146,27 +148,17 @@ class HairColorGAN(object):
         self.image_pil.save(path)
     
     def save_logs(self, epoch):
-        print('finished epoch ', epoch)
         save_stats(self.epoch_dir, self.iter_tracker, self.loss_G_tracker, self.loss_D_tracker)
         self.iter = 0
         
-    def save_model(self, iter, type='best'):
-        if type not in ['best', 'latest']:
-            raise Exception("type of model should be either 'best' or 'latest'.")
+    def save_model(self, iter):
         for model in self.model_names:
-            filename = '%s_model_%s.pth' % (type, model)
+            filename = 'model_%s_iter_%s.pth' % (model, iter)
             path = os.path.join(self.epoch_dir, filename)
-
-            # delete previous [best or latest] model
-            open(path, 'w').close()
-            os.remove(path)
-        
-            # save current [best or latest] model
             net = getattr(self, model)
             torch.save({'iter': iter,
                         'model_state_dict': net.state_dict()
                         }, path)
-            # print(('%s %s model saved to %s') % (type, model, path))
 
     def load_latest_checkpoint(self):
         folder = [f for f in os.listdir(self.params.save_dir) if 'epoch_' in f][-1]
@@ -174,7 +166,8 @@ class HairColorGAN(object):
         self.checkpoint = int(folder.split('_')[-1])
     
         for model in self.model_names:
-            filename = 'latest_model_%s.pth' % (model)
+            identifier = 'model_%s' % (model)
+            filename = [f for f in os.listdir(save_path) if identifier in f][-1]
             state_dict = torch.load(os.path.join(save_path, filename), map_location=self.device)
             net = getattr(self, model)
             net.load_state_dict(state_dict['model_state_dict'])

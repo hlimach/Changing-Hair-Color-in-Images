@@ -2,7 +2,7 @@
 dataset/*.txt
 dataset/CelebAMask-HQ-mask-anno/*
 dataset/CelebA-HQ-img/*
-model/checkpoints/*
+model/checkpoints/epoch_0/
 .DS_Store
 
 # Byte-compiled / optimized / DLL files

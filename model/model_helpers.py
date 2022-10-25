@@ -38,6 +38,13 @@ def init_checkpoint_dir(save_dir, epoch):
         os.makedirs(folder)
     return folder
 
+def load_trackers(dir):
+    df = pd.read_csv(os.path.join(dir, 'losses.csv'))
+    iter_tracker = df['iter'].tolist()
+    loss_G_tracker = df['loss_G'].tolist()
+    loss_D_tracker = df['loss_D'].tolist()
+    return iter_tracker, loss_G_tracker, loss_D_tracker
+
 def assemble_stats(iters, loss_G, loss_D):
     return {'iter' : np.full(len(loss_G), iters),
             'loss_G': loss_G,
