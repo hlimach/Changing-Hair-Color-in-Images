@@ -3,7 +3,7 @@ import json
 import random
 from PIL import Image
 from torch.utils.data import Dataset
-from utils.data_processing import *
+from .data_processing import *
 
 class HairDataset(Dataset):
     def __init__(self, params):

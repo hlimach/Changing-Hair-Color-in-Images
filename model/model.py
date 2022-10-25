@@ -1,5 +1,5 @@
 from .networks import Generator, NLayerDiscriminator
-from utils.model_helpers import *
+from .model_helpers import *
 import torch.nn as nn
 import torch
 from PIL import Image
